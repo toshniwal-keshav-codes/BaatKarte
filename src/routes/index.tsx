@@ -1,24 +1,27 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useAuthStore } from "@/lib/stores/auth";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    navigate({ to: user ? "/inbox" : "/login", replace: true });
+  }, [hydrated, user, navigate]);
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="grid min-h-screen place-items-center bg-[#08070f] text-white">
+      <div className="flex items-center gap-3">
+        <span className="inline-block size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <span className="text-sm text-white/60">Loading BaatKarte…</span>
+      </div>
     </div>
   );
 }
