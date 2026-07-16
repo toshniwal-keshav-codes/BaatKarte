@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -6,24 +7,15 @@ import { toast } from "sonner";
 import { authApi } from "@/lib/api/auth";
 import { extractApiError } from "@/lib/api/client";
 import { registerFormSchema, type RegisterFormValues } from "@/lib/validation/auth";
-import {
-  AuthLayout,
-  AuthInput,
-  PrimaryButton,
-} from "@/components/auth/AuthLayout";
+import { AuthLayout, AuthInput, PrimaryButton } from "@/components/auth/AuthLayout";
 
-export const Route = createFileRoute("/register")({
-  head: () => ({
-    meta: [
-      { title: "Create your BaatKarte account" },
-      { name: "description", content: "Passwordless signup for BaatKarte — real-time one-to-one messaging." },
-    ],
-  }),
-  component: RegisterPage,
-});
-
-function RegisterPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Create your BaatKarte account";
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -37,10 +29,13 @@ function RegisterPage() {
     mutationFn: authApi.registerStart,
     onSuccess: (data, vars) => {
       toast.success("Code sent — check your inbox.");
-      navigate({
-        to: "/verify-otp",
-        search: { token: data.otpToken, email: data.email, mode: "register", name: vars.name },
+      const params = new URLSearchParams({
+        token: data.otpToken,
+        email: data.email,
+        mode: "register",
+        name: vars.name,
       });
+      navigate(`/verify-otp?${params.toString()}`);
     },
     onError: (err) => toast.error(extractApiError(err)),
   });

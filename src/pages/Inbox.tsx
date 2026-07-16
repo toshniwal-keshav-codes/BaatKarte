@@ -1,30 +1,23 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LogOut, MessagesSquare } from "lucide-react";
 import { useAuthStore } from "@/lib/stores/auth";
 import { authApi } from "@/lib/api/auth";
 
-export const Route = createFileRoute("/inbox")({
-  head: () => ({
-    meta: [
-      { title: "Inbox — BaatKarte" },
-      { name: "description", content: "Your private conversations on BaatKarte." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: InboxPage,
-});
-
-function InboxPage() {
+export default function InboxPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s.hydrated);
   const clear = useAuthStore((s) => s.clear);
 
   useEffect(() => {
-    if (hydrated && !user) navigate({ to: "/login" });
+    document.title = "Inbox — BaatKarte";
+  }, []);
+
+  useEffect(() => {
+    if (hydrated && !user) navigate("/login");
   }, [hydrated, user, navigate]);
 
   const logoutMutation = useMutation({
@@ -32,7 +25,7 @@ function InboxPage() {
     onSuccess: () => {
       clear();
       toast.success("Signed out.");
-      navigate({ to: "/login" });
+      navigate("/login");
     },
   });
 

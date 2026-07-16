@@ -1,10 +1,9 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { z } from "zod";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { authApi } from "@/lib/api/auth";
 import { extractApiError } from "@/lib/api/client";
@@ -12,31 +11,25 @@ import { useAuthStore } from "@/lib/stores/auth";
 import { otpFormSchema, type OtpFormValues } from "@/lib/validation/auth";
 import { AuthLayout, PrimaryButton, FieldError } from "@/components/auth/AuthLayout";
 
-const searchSchema = z.object({
-  token: z.string(),
-  email: z.string().email(),
-  mode: z.enum(["login", "register"]),
-  name: z.string().optional(),
-});
-
-export const Route = createFileRoute("/verify-otp")({
-  validateSearch: searchSchema,
-  head: () => ({
-    meta: [
-      { title: "Verify your code — BaatKarte" },
-      { name: "description", content: "Enter the 6-digit code we emailed you." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: VerifyPage,
-});
-
-function VerifyPage() {
+export default function VerifyOtpPage() {
   const navigate = useNavigate();
-  const { token, email, mode } = Route.useSearch();
+  const [searchParams] = useSearchParams();
   const setSession = useAuthStore((s) => s.setSession);
+
+  const initialToken = searchParams.get("token") ?? "";
+  const email = searchParams.get("email") ?? "";
+  const mode = (searchParams.get("mode") as "login" | "register") ?? "login";
+
   const [cooldown, setCooldown] = useState(60);
-  const [otpToken, setOtpToken] = useState(token);
+  const [otpToken, setOtpToken] = useState(initialToken);
+
+  useEffect(() => {
+    document.title = "Verify your code — BaatKarte";
+  }, []);
+
+  useEffect(() => {
+    if (!initialToken || !email) navigate("/login", { replace: true });
+  }, [initialToken, email, navigate]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -59,7 +52,7 @@ function VerifyPage() {
     onSuccess: (data) => {
       setSession(data);
       toast.success(`Welcome${data.user.name ? ", " + data.user.name.split(" ")[0] : ""}!`);
-      navigate({ to: "/inbox" });
+      navigate("/inbox");
     },
     onError: (err) => {
       toast.error(extractApiError(err));
@@ -76,11 +69,16 @@ function VerifyPage() {
     onError: (err) => toast.error(extractApiError(err)),
   });
 
+  const subtitle = useMemo(
+    () => `We sent a 6-digit code to ${email}. It expires in 10 minutes.`,
+    [email],
+  );
+
   return (
     <AuthLayout
       eyebrow={mode === "register" ? "Verify email" : "One-time code"}
       title="Enter your code"
-      subtitle={`We sent a 6-digit code to ${email}. It expires in 10 minutes.`}
+      subtitle={subtitle}
     >
       <form
         onSubmit={handleSubmit((v) => verifyMutation.mutate({ otpToken, code: v.code }))}
@@ -96,7 +94,10 @@ function VerifyPage() {
                 value={field.value}
                 onChange={(v) => {
                   field.onChange(v);
-                  if (v.length === 6) handleSubmit((vals) => verifyMutation.mutate({ otpToken, code: vals.code }))();
+                  if (v.length === 6)
+                    handleSubmit((vals) =>
+                      verifyMutation.mutate({ otpToken, code: vals.code }),
+                    )();
                 }}
                 inputMode="numeric"
                 autoFocus
@@ -134,7 +135,6 @@ function VerifyPage() {
               { otpToken },
               {
                 onSuccess: (_, vars) => {
-                  // Keep same otpToken; server refreshed the code under the same challenge.
                   setOtpToken(vars.otpToken);
                 },
               },
@@ -142,7 +142,11 @@ function VerifyPage() {
           }
           className="font-medium text-white/80 hover:text-white disabled:cursor-not-allowed disabled:text-white/30"
         >
-          {cooldown > 0 ? `Resend in ${cooldown}s` : resendMutation.isPending ? "Sending…" : "Resend code"}
+          {cooldown > 0
+            ? `Resend in ${cooldown}s`
+            : resendMutation.isPending
+              ? "Sending…"
+              : "Resend code"}
         </button>
       </div>
     </AuthLayout>

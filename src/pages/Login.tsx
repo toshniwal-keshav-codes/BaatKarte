@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -8,18 +9,13 @@ import { extractApiError } from "@/lib/api/client";
 import { loginFormSchema, type LoginFormValues } from "@/lib/validation/auth";
 import { AuthLayout, AuthInput, PrimaryButton } from "@/components/auth/AuthLayout";
 
-export const Route = createFileRoute("/login")({
-  head: () => ({
-    meta: [
-      { title: "Sign in to BaatKarte" },
-      { name: "description", content: "Passwordless sign-in for BaatKarte." },
-    ],
-  }),
-  component: LoginPage,
-});
-
-function LoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Sign in to BaatKarte";
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -33,10 +29,12 @@ function LoginPage() {
     mutationFn: authApi.loginStart,
     onSuccess: (data) => {
       toast.success("Code sent to your email.");
-      navigate({
-        to: "/verify-otp",
-        search: { token: data.otpToken, email: data.email, mode: "login" },
+      const params = new URLSearchParams({
+        token: data.otpToken,
+        email: data.email,
+        mode: "login",
       });
+      navigate(`/verify-otp?${params.toString()}`);
     },
     onError: (err) => toast.error(extractApiError(err)),
   });

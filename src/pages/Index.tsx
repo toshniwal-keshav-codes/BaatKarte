@@ -1,19 +1,15 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/lib/stores/auth";
 
-export const Route = createFileRoute("/")({
-  component: Index,
-});
-
-function Index() {
+export default function IndexPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     if (!hydrated) return;
-    navigate({ to: user ? "/inbox" : "/login", replace: true });
+    navigate(user ? "/inbox" : "/login", { replace: true });
   }, [hydrated, user, navigate]);
 
   return (
