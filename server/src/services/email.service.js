@@ -1,24 +1,43 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
 /**
- * Professional, reusable Email Service using Resend Node SDK.
+ * Professional, reusable Email Service using Nodemailer with SMTP (e.g. Gmail).
  * Handles transactional emails with dark-themed HTML templates,
  * retry logic for transient failures, and safe error logging.
  */
 export class EmailService {
   constructor() {
-    this.apiKey = env.RESEND_API_KEY;
-    this.from = env.EMAIL_FROM || "onboarding@resend.dev";
-    this.resend = this.apiKey ? new Resend(this.apiKey) : null;
+    this.host = env.SMTP_HOST || "smtp.gmail.com";
+    this.port = env.SMTP_PORT || 587;
+    this.user = env.SMTP_EMAIL || "";
+    this.pass = env.SMTP_PASSWORD || "";
+    this.from =
+      env.EMAIL_FROM || (this.user ? `BaatKarte <${this.user}>` : "noreply@example.com");
+
+    if (this.user && this.pass) {
+      this.transporter = nodemailer.createTransport({
+        host: this.host,
+        port: this.port,
+        secure: this.port === 465, // true for 465, false for 587 (STARTTLS)
+        auth: {
+          user: this.user,
+          pass: this.pass,
+        },
+      });
+    } else {
+      this.transporter = null;
+    }
   }
 
   /**
    * Internal helper to execute email sends with 1 retry on transient failures.
    */
   async _sendWithRetry({ to, subject, html }) {
-    if (!this.resend || !this.apiKey) {
-      console.warn(`[email-service] RESEND_API_KEY not configured — skipped sending email to ${to}`);
+    if (!this.transporter || !this.user || !this.pass) {
+      console.warn(
+        `[email-service] SMTP credentials not configured (SMTP_EMAIL/SMTP_PASSWORD) — skipped sending email to ${to}`,
+      );
       return { skipped: true };
     }
 
@@ -28,18 +47,14 @@ export class EmailService {
     while (attempt < 2) {
       attempt++;
       try {
-        const response = await this.resend.emails.send({
+        const info = await this.transporter.sendMail({
           from: this.from,
           to,
           subject,
           html,
         });
 
-        if (response.error) {
-          throw new Error(`Resend Error (${response.error.name}): ${response.error.message}`);
-        }
-
-        return response;
+        return { messageId: info.messageId, response: info.response };
       } catch (err) {
         lastError = err;
         console.error(

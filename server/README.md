@@ -1,18 +1,28 @@
 # BaatKarte Server
 
-Express + MongoDB + Socket.io backend for BaatKarte. Passwordless auth via OTP over email (Brevo).
+Express + MongoDB + Socket.io backend for BaatKarte. Passwordless auth via OTP over email using **Nodemailer + Gmail SMTP**.
 
 ## Local dev
 
 ```bash
 cd server
 cp .env.example .env
-# fill BREVO_API_KEY, MONGO_URI, JWT secrets
+# fill SMTP_EMAIL, SMTP_PASSWORD, MONGO_URI, JWT secrets
 npm install
 npm run dev
 ```
 
 Server runs on `http://localhost:4000` and expects the client on `http://localhost:8080` (configurable via `CLIENT_ORIGIN`).
+
+## Environment Variables (Email Configuration)
+
+- `SMTP_HOST`: SMTP host server (default: `smtp.gmail.com`)
+- `SMTP_PORT`: SMTP server port (default: `587`)
+- `SMTP_EMAIL`: Your sender Gmail address
+- `SMTP_PASSWORD`: **Gmail App Password** (Generated via Google Account > Security > 2-Step Verification > App Passwords)
+- `EMAIL_FROM`: Display sender name & address (e.g., `BaatKarte <your-email@gmail.com>`)
+
+> **Note**: For Gmail SMTP, you MUST use a 16-character **Gmail App Password** instead of your standard Google account password.
 
 ## Deploying to Railway
 

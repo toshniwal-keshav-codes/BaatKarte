@@ -69,28 +69,33 @@ export default function InboxPage() {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen flex-col bg-[#08070f] text-white overflow-hidden">
+    <div className="flex h-screen flex-col bg-[#040303] text-[#BEB0A7] overflow-hidden antialiased font-sans">
       {/* Global Header */}
-      <header className="flex shrink-0 items-center justify-between border-b border-white/5 bg-[#141422] px-4 py-3 md:px-6">
+      <header className="flex shrink-0 items-center justify-between border-b border-[#BEB0A7]/10 bg-[#0A0C0B] px-4 py-3 md:px-6">
         <div className="flex items-center gap-3">
-          <div className="grid size-9 place-items-center rounded-xl bg-white/10 text-white shadow-sm border border-white/5">
+          <div className="grid size-9 place-items-center rounded-xl bg-[#3A4E48]/40 text-[#8B9D83] shadow-sm border border-[#8B9D83]/30">
             <MessagesSquare className="size-4" />
           </div>
-          <span className="text-base font-semibold tracking-tight text-white/90">
-            BaatKarte
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-base font-bold tracking-tight text-white">
+              BaatKarte
+            </span>
+            <span className="rounded-md bg-[#3A4E48]/30 px-2 py-0.5 text-[10px] font-semibold text-[#8B9D83] border border-[#8B9D83]/20">
+              SaaS
+            </span>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden text-right text-xs md:block">
-            <div className="font-medium text-white/90">{user.name}</div>
-            <div className="text-white/40">@{user.username}</div>
+            <div className="font-semibold text-white">{user.name}</div>
+            <div className="text-[#6A7B76]">@{user.username}</div>
           </div>
           <button
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-[#BEB0A7]/15 bg-[#040303]/60 px-3.5 py-1.5 text-xs font-semibold text-[#BEB0A7] transition-all hover:bg-[#3A4E48]/40 hover:border-[#8B9D83]/40 hover:text-white disabled:opacity-50 cursor-pointer shadow-sm"
           >
-            <LogOut className="size-3.5" />
+            <LogOut className="size-3.5 text-[#6A7B76]" />
             <span className="hidden sm:inline">Sign out</span>
           </button>
         </div>
@@ -101,7 +106,7 @@ export default function InboxPage() {
         {/* Sidebar */}
         <div
           className={cn(
-            "w-full md:w-[320px] lg:w-[380px] shrink-0 transition-transform duration-300 ease-in-out z-10",
+            "w-full md:w-[320px] lg:w-[380px] shrink-0 transition-all duration-300 ease-in-out z-10 border-r border-[#BEB0A7]/10 bg-[#060807]",
             activeConversationId ? "hidden md:block" : "block"
           )}
         >
@@ -117,7 +122,7 @@ export default function InboxPage() {
         {/* Chat Window Area */}
         <div
           className={cn(
-            "flex-1 min-w-0 transition-opacity duration-300 relative",
+            "flex-1 min-w-0 transition-opacity duration-300 relative bg-[#040303]",
             !activeConversationId ? "hidden md:block" : "block"
           )}
         >

@@ -86,34 +86,34 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-full flex-col bg-[#0b0b12]">
+    <div className="flex h-full flex-col bg-[#040303]">
       {/* Header */}
-      <header className="flex shrink-0 items-center gap-3 border-b border-white/5 bg-[#141422] p-4">
+      <header className="flex shrink-0 items-center gap-3.5 border-b border-[#BEB0A7]/10 bg-[#0A0C0B] px-5 py-3.5 shadow-sm">
         <button
           onClick={onBack}
-          className="md:hidden grid size-10 place-items-center rounded-xl text-white/50 hover:bg-white/5 hover:text-white/90 transition"
+          className="md:hidden grid size-9 place-items-center rounded-xl text-[#BEB0A7]/70 hover:bg-[#3A4E48]/30 hover:text-white transition cursor-pointer"
         >
           <ArrowLeft className="size-5" />
         </button>
 
         <div className="relative">
-          <Avatar className="size-10 border border-white/10">
+          <Avatar className="size-10 border border-[#BEB0A7]/20 shadow-sm">
             <AvatarImage src={otherUser.avatarUrl || ""} alt={otherUser.name} />
-            <AvatarFallback className="bg-white/5 text-xs">
+            <AvatarFallback className="bg-[#3A4E48] text-white text-xs font-bold">
               {otherUser.name.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {otherUser.isOnline && (
-            <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-[#141422] bg-emerald-500" />
+            <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-[#0A0C0B] bg-[#8B9D83] shadow-sm shadow-[#8B9D83]" />
           )}
         </div>
 
         <div className="flex flex-col">
-          <span className="font-medium text-white/90 leading-tight">
+          <span className="font-bold text-sm text-white leading-tight">
             {otherUser.name}
           </span>
-          <span className="text-xs text-white/40">
-            {otherUser.isOnline ? "Online" : otherUser.lastSeenAt ? `Last seen ${format(new Date(otherUser.lastSeenAt), "MMM d, HH:mm")}` : "Offline"}
+          <span className="text-[11px] text-[#6A7B76]">
+            {otherUser.isOnline ? "Active now" : otherUser.lastSeenAt ? `Last active ${format(new Date(otherUser.lastSeenAt), "MMM d, HH:mm")}` : "Offline"}
           </span>
         </div>
       </header>
@@ -123,19 +123,19 @@ export function ChatWindow({
         <div className="flex flex-col gap-4 py-6 min-h-full justify-end">
           
           <div ref={topMarkerRef} className="h-4 w-full flex justify-center">
-            {isFetchingNextPage && <Loader2 className="size-4 animate-spin text-white/40" />}
+            {isFetchingNextPage && <Loader2 className="size-4 animate-spin text-[#8B9D83]" />}
           </div>
 
           {messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-white/40">
-              <p className="text-sm">This is the beginning of your conversation.</p>
-              <p className="text-xs mt-1">Messages are end-to-end encrypted and expire in 7 days.</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-[#6A7B76]">
+              <p className="text-sm font-semibold text-white/80">Start of conversation</p>
+              <p className="text-xs mt-1 text-[#6A7B76]">Messages sent in BaatKarte are real-time & private.</p>
             </div>
           ) : (
-            groupedMessages.map((group, groupIdx) => (
+            groupedMessages.map((group) => (
               <div key={group.date.toISOString()} className="flex flex-col">
                 <div className="flex justify-center my-6">
-                  <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-white/40 border border-white/10">
+                  <span className="rounded-full bg-[#0A0C0B] px-3.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#6A7B76] border border-[#BEB0A7]/10 shadow-sm">
                     {format(group.date, "MMMM d, yyyy")}
                   </span>
                 </div>

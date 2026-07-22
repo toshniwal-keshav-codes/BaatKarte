@@ -9,12 +9,12 @@ async function test() {
     await mongoose.connect(env.MONGO_URI);
     console.log("✅ MongoDB Connection Successful!");
 
-    // Testing Resend Email Service
-    console.log("\nTesting Resend Email Service...");
-    if (!env.RESEND_API_KEY) {
-      console.log("❌ RESEND_API_KEY is not set in .env");
+    // Testing Nodemailer (Gmail SMTP) Email Service
+    console.log("\nTesting Nodemailer Email Service...");
+    if (!env.SMTP_EMAIL || !env.SMTP_PASSWORD) {
+      console.log("❌ SMTP_EMAIL or SMTP_PASSWORD is not set in .env");
     } else {
-      const testEmail = "toshnikeshav24306@gmail.com";
+      const testEmail = env.SMTP_EMAIL;
       console.log("Sending test OTP email to:", testEmail);
 
       const res = await emailService.sendOTPEmail({
@@ -24,7 +24,7 @@ async function test() {
         purpose: "register",
       });
 
-      console.log("✅ Resend Email sent successfully! Result:", res);
+      console.log("✅ Nodemailer Email sent successfully! Result:", res);
     }
   } catch (err) {
     console.error("\n❌ Error occurred during tests:");

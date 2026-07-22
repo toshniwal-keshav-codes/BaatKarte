@@ -22,8 +22,11 @@ const schema = z.object({
   OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().default(60),
   OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
 
-  RESEND_API_KEY: z.string().optional().default(""),
-  EMAIL_FROM: z.string().default("onboarding@resend.dev"),
+  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_EMAIL: z.string().optional().default(""),
+  SMTP_PASSWORD: z.string().optional().default(""),
+  EMAIL_FROM: z.string().optional().default(""),
 });
 
 const parsed = schema.safeParse(process.env);

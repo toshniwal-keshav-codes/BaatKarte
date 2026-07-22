@@ -57,9 +57,9 @@ export default function LoginPage() {
         <PrimaryButton loading={mutation.isPending}>Send login code</PrimaryButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/60">
+      <p className="mt-6 text-center text-xs text-[#BEB0A7]/70">
         New to BaatKarte?{" "}
-        <Link to="/register" className="font-medium text-white hover:underline">
+        <Link to="/register" className="font-semibold text-[#8B9D83] hover:underline">
           Create an account
         </Link>
       </p>

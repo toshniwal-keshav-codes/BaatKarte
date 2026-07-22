@@ -72,9 +72,9 @@ export default function RegisterPage() {
         <PrimaryButton loading={mutation.isPending}>Send verification code</PrimaryButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-white/60">
+      <p className="mt-6 text-center text-xs text-[#BEB0A7]/70">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-white hover:underline">
+        <Link to="/login" className="font-semibold text-[#8B9D83] hover:underline">
           Sign in
         </Link>
       </p>

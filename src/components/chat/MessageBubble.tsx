@@ -19,24 +19,25 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={cn("flex w-full mb-4", isOwn ? "justify-end" : "justify-start")}
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className={cn("flex w-full mb-3.5", isOwn ? "justify-end" : "justify-start")}
       >
         <div
           className={cn(
-            "relative max-w-[75%] md:max-w-[65%] rounded-2xl px-4 py-2.5 shadow-sm text-[15px] leading-relaxed",
+            "relative max-w-[78%] md:max-w-[68%] rounded-2xl px-4 py-3 shadow-md text-sm leading-relaxed border transition-all",
             isOwn
-              ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-white/10 text-white/90 rounded-tl-sm"
+              ? "bg-[#3A4E48] text-[#BEB0A7] border-[#8B9D83]/30 rounded-tr-xs shadow-[#040303]/40"
+              : "bg-[#0D1110] text-[#BEB0A7]/95 border-[#BEB0A7]/15 rounded-tl-xs shadow-[#040303]/20"
           )}
         >
-          <div className="break-words whitespace-pre-wrap">{message.content}</div>
+          <div className="break-words whitespace-pre-wrap selection:bg-[#8B9D83]/40">{message.content}</div>
           
           <div
             className={cn(
-              "mt-1 flex items-center justify-end gap-1.5 text-[10px]",
-              isOwn ? "text-primary-foreground/70" : "text-white/40"
+              "mt-1.5 flex items-center justify-end gap-1.5 text-[10px] font-mono tracking-tight",
+              isOwn ? "text-[#BEB0A7]/70" : "text-[#6A7B76]"
             )}
           >
             <span>{format(new Date(message.sentAt), "HH:mm")}</span>
@@ -44,11 +45,11 @@ export const MessageBubble = forwardRef<HTMLDivElement, MessageBubbleProps>(
             {isOwn && (
               <span className="flex items-center">
                 {message.status === "read" ? (
-                  <CheckCheck className="size-3.5 text-emerald-400" />
+                  <CheckCheck className="size-3.5 text-[#8B9D83]" />
                 ) : message.status === "delivered" ? (
-                  <CheckCheck className="size-3.5" />
+                  <CheckCheck className="size-3.5 text-[#BEB0A7]/60" />
                 ) : (
-                  <Check className="size-3.5" />
+                  <Check className="size-3.5 text-[#BEB0A7]/40" />
                 )}
               </span>
             )}

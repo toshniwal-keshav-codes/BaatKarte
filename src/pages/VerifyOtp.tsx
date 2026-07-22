@@ -108,7 +108,7 @@ export default function VerifyOtpPage() {
                     <InputOTPSlot
                       key={i}
                       index={i}
-                      className="size-12 rounded-xl border-white/10 bg-white/5 text-lg text-white data-[active=true]:border-white/40 data-[active=true]:ring-2 data-[active=true]:ring-white/10"
+                      className="size-12 rounded-xl border-[#BEB0A7]/15 bg-[#040303] text-lg font-bold text-white transition-all duration-200 data-[active=true]:border-[#8B9D83] data-[active=true]:ring-2 data-[active=true]:ring-[#8B9D83]/20"
                     />
                   ))}
                 </InputOTPGroup>
@@ -123,8 +123,8 @@ export default function VerifyOtpPage() {
         <PrimaryButton loading={verifyMutation.isPending}>Verify and continue</PrimaryButton>
       </form>
 
-      <div className="mt-6 flex items-center justify-between text-sm text-white/60">
-        <Link to={mode === "register" ? "/register" : "/login"} className="hover:text-white">
+      <div className="mt-6 flex items-center justify-between text-xs text-[#BEB0A7]/70">
+        <Link to={mode === "register" ? "/register" : "/login"} className="hover:text-white transition">
           ← Use a different email
         </Link>
         <button
@@ -140,7 +140,7 @@ export default function VerifyOtpPage() {
               },
             )
           }
-          className="font-medium text-white/80 hover:text-white disabled:cursor-not-allowed disabled:text-white/30"
+          className="font-semibold text-[#8B9D83] hover:underline disabled:cursor-not-allowed disabled:text-[#6A7B76]/50 cursor-pointer"
         >
           {cooldown > 0
             ? `Resend in ${cooldown}s`
