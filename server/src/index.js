@@ -11,6 +11,8 @@ import { env } from "./config/env.js";
 import { connectDb } from "./config/db.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import authRouter from "./modules/auth/auth.routes.js";
+import chatRouter from "./modules/chat/chat.routes.js";
+import adminRouter from "./modules/admin/admin.routes.js";
 import { attachSocket } from "./socket/index.js";
 
 const app = express();
@@ -29,6 +31,8 @@ if (env.NODE_ENV !== "test") app.use(morgan("tiny"));
 
 app.get("/health", (_req, res) => res.json({ ok: true, service: "baatkarte" }));
 app.use("/api/auth", authRouter);
+app.use("/api/chat", chatRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -37,6 +41,10 @@ const server = http.createServer(app);
 const io = new SocketIOServer(server, {
   cors: { origin: env.CLIENT_ORIGIN.split(",").map((s) => s.trim()), credentials: true },
 });
+
+// Make io accessible to controllers via req.app.get("io")
+app.set("io", io);
+
 attachSocket(io);
 
 await connectDb();

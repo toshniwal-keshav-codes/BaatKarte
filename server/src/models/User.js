@@ -20,6 +20,12 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+      index: true,
+    },
     avatarUrl: { type: String, default: "" },
     bio: { type: String, default: "", maxlength: 200 },
     lastSeenAt: { type: Date, default: Date.now },
@@ -34,8 +40,11 @@ UserSchema.methods.toPublic = function toPublic() {
     name: this.name,
     username: this.username,
     email: this.email,
+    role: this.role || "user",
     avatarUrl: this.avatarUrl,
     bio: this.bio,
+    isOnline: this.isOnline,
+    lastSeenAt: this.lastSeenAt,
     createdAt: this.createdAt,
   };
 };

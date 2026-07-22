@@ -5,8 +5,11 @@ export interface PublicUser {
   name: string;
   username: string;
   email: string;
+  role?: "user" | "admin";
   avatarUrl?: string;
   bio?: string;
+  isOnline?: boolean;
+  lastSeenAt?: string;
   createdAt?: string;
 }
 
