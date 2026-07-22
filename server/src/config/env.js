@@ -22,9 +22,8 @@ const schema = z.object({
   OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().default(60),
   OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
 
-  BREVO_API_KEY: z.string().optional().default(""),
-  BREVO_SENDER_EMAIL: z.string().email().default("noreply@example.com"),
-  BREVO_SENDER_NAME: z.string().default("BaatKarte"),
+  RESEND_API_KEY: z.string().optional().default(""),
+  EMAIL_FROM: z.string().default("onboarding@resend.dev"),
 });
 
 const parsed = schema.safeParse(process.env);

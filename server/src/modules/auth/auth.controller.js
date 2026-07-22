@@ -3,7 +3,7 @@ import { HttpError } from "../../middleware/error.js";
 import { User } from "../../models/User.js";
 import { OtpChallenge } from "../../models/OtpChallenge.js";
 import { generateOtpCode, signOtpToken, verifyOtpToken } from "../../utils/otp.js";
-import { sendOtpEmail } from "../../utils/brevo.js";
+import { sendOtpEmail } from "../../services/email.service.js";
 import {
   signAccessToken,
   issueRefreshToken,

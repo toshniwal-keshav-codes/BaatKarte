@@ -8,7 +8,9 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -19,6 +21,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.3",
     "morgan": "^1.10.0",
+    "resend": "^6.18.0",
     "socket.io": "^4.8.1",
     "zod": "^3.24.1"
   }
