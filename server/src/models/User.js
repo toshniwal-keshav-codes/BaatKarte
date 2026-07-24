@@ -30,6 +30,17 @@ const UserSchema = new mongoose.Schema(
     bio: { type: String, default: "", maxlength: 200 },
     lastSeenAt: { type: Date, default: Date.now },
     isOnline: { type: Boolean, default: false },
+
+    // --- Scalability & Modular Extension Fields ---
+    customStatus: { type: String, default: "", maxlength: 100 },
+    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    pushTokens: [{ type: String }],
+    preferences: {
+      notificationsEnabled: { type: Boolean, default: true },
+      soundEnabled: { type: Boolean, default: true },
+      readReceiptsEnabled: { type: Boolean, default: true },
+    },
+    metadata: { type: Map, of: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true },
 );

@@ -1,5 +1,6 @@
 import { verifyAccessToken } from "../modules/auth/tokens.js";
 import { User } from "../models/User.js";
+import { registerSocketExtensions } from "./extension.socket.js";
 
 /**
  * Production-ready Socket.io handler.
@@ -63,6 +64,9 @@ export function attachSocket(io) {
     socket.on("typing:stop", () => {
       // intentionally suppressed
     });
+
+    // Attach modular socket extension points (WebRTC signaling, receipts, presence hooks)
+    registerSocketExtensions(io, socket);
 
     // ── Disconnect ───────────────────────────────────────────────────────────
     socket.on("disconnect", async () => {

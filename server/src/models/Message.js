@@ -34,6 +34,34 @@ const MessageSchema = new mongoose.Schema(
       type: Date,
       default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
+
+    // --- Scalability & Modular Extension Fields ---
+    messageType: {
+      type: String,
+      enum: ["text", "voice", "file", "system"],
+      default: "text",
+    },
+    attachments: [
+      {
+        url: { type: String },
+        fileName: { type: String },
+        mimeType: { type: String },
+        fileSize: { type: Number },
+        durationSeconds: { type: Number },
+      },
+    ],
+    deliveredTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    encryption: {
+      isEncrypted: { type: Boolean, default: false },
+      keyVersion: { type: String },
+      iv: { type: String },
+    },
+    moderation: {
+      flagged: { type: Boolean, default: false },
+      score: { type: Number, default: 0 },
+      reason: { type: String, default: "" },
+    },
   },
   { timestamps: false },
 );
