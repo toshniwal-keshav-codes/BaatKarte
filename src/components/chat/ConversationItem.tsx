@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { formatDistanceToNowStrict, isToday, format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ChatConversation } from "@/lib/api/chat";
@@ -27,11 +28,17 @@ function formatTime(dateStr?: string | null) {
     .replace(" years", "y");
 }
 
-export function ConversationItem({ conversation, isActive, unreadCount = 0, onClick }: ConversationItemProps) {
+export const ConversationItem = memo(function ConversationItem({
+  conversation,
+  isActive,
+  unreadCount = 0,
+  onClick,
+}: ConversationItemProps) {
   const currentUser = useAuthStore((s) => s.user);
-  
+
   // Find the other participant
-  const otherUser = conversation.participants.find((p) => p.id !== currentUser?.id) || conversation.participants[0];
+  const otherUser =
+    conversation.participants.find((p) => p.id !== currentUser?.id) || conversation.participants[0];
   if (!otherUser) return null;
 
   return (
@@ -43,7 +50,7 @@ export function ConversationItem({ conversation, isActive, unreadCount = 0, onCl
         "group relative flex w-full items-center gap-3.5 rounded-xl p-3 text-left transition-all duration-200 cursor-pointer overflow-hidden border",
         isActive
           ? "bg-[#3A4E48]/30 border-[#8B9D83]/30 shadow-md shadow-[#040303]/40"
-          : "border-transparent hover:bg-[#101413] hover:border-[#BEB0A7]/10"
+          : "border-transparent hover:bg-[#101413] hover:border-[#BEB0A7]/10",
       )}
     >
       {/* Active bar indicator */}
@@ -65,25 +72,31 @@ export function ConversationItem({ conversation, isActive, unreadCount = 0, onCl
 
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex items-center justify-between">
-          <span className={cn(
-            "truncate font-semibold text-sm transition-colors",
-            isActive ? "text-white" : "text-[#BEB0A7] group-hover:text-white"
-          )}>
+          <span
+            className={cn(
+              "truncate font-semibold text-sm transition-colors",
+              isActive ? "text-white" : "text-[#BEB0A7] group-hover:text-white",
+            )}
+          >
             {otherUser.name}
           </span>
           <span className="shrink-0 text-[10px] font-mono text-[#6A7B76]">
             {formatTime(conversation.lastMessageAt)}
           </span>
         </div>
-        
+
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <span className={cn(
-            "truncate text-xs",
-            unreadCount > 0 ? "font-semibold text-[#BEB0A7]" : "text-[#6A7B76]"
-          )}>
-            {conversation.lastMessage?.content || <span className="italic opacity-60">No messages yet</span>}
+          <span
+            className={cn(
+              "truncate text-xs",
+              unreadCount > 0 ? "font-semibold text-[#BEB0A7]" : "text-[#6A7B76]",
+            )}
+          >
+            {conversation.lastMessage?.content || (
+              <span className="italic opacity-60">No messages yet</span>
+            )}
           </span>
-          
+
           {unreadCount > 0 && (
             <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-[#8B9D83] text-[10px] font-bold text-[#040303] shadow-sm">
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -93,4 +106,4 @@ export function ConversationItem({ conversation, isActive, unreadCount = 0, onCl
       </div>
     </motion.button>
   );
-}
+});
