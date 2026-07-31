@@ -78,8 +78,13 @@ export function ChatWindow({
     return () => observerRef.current?.disconnect();
   }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
-  // Find partner
-  const otherUser = conversation.participants.find((p) => p.id !== currentUser?.id) || conversation.participants[0];
+  // Safely find partner
+  const currentId = currentUser?.id || (currentUser as any)?._id;
+  const otherUser =
+    conversation.participants.find((p) => {
+      const pid = p.id || (p as any)?._id;
+      return pid && currentId && String(pid) !== String(currentId);
+    }) || conversation.participants[0];
 
   if (isLoading && messages.length === 0) {
     return <ChatWindowSkeleton />;
@@ -139,8 +144,8 @@ export function ChatWindow({
                     {format(group.date, "MMMM d, yyyy")}
                   </span>
                 </div>
-                {group.messages.map((msg) => (
-                  <MessageBubble key={msg.id} message={msg} />
+                {group.messages.map((msg, idx) => (
+                  <MessageBubble key={msg.id || (msg as any)._id || `msg-${idx}`} message={msg} />
                 ))}
               </div>
             ))

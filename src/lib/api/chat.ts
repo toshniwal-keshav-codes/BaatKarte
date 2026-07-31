@@ -39,13 +39,18 @@ export interface MessagesPage {
 // ─── API Methods ──────────────────────────────────────────────────────────────
 
 export const chatApi = {
-  searchUser: (email: string) =>
-    api.get<{ user: ChatUser }>("/chat/users/search", { params: { email } }).then((r) => r.data),
+  searchUsers: (query: string) =>
+    api.get<{ users: ChatUser[] }>("/chat/users/search", { params: { q: query } }).then((r) => r.data),
 
-  createOrOpenConversation: (email: string) =>
-    api
-      .post<{ conversation: ChatConversation }>("/chat/conversations", { email })
-      .then((r) => r.data),
+  searchUser: (email: string) =>
+    api.get<{ user: ChatUser }>("/chat/users/search", { params: { q: email } }).then((r) => r.data),
+
+  createOrOpenConversation: (params: { email?: string; userId?: string; username?: string } | string) => {
+    const payload = typeof params === "string" ? { email: params } : params;
+    return api
+      .post<{ conversation: ChatConversation }>("/chat/conversations", payload)
+      .then((r) => r.data);
+  },
 
   getConversations: () =>
     api.get<{ conversations: ChatConversation[] }>("/chat/conversations").then((r) => r.data),

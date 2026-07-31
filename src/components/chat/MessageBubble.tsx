@@ -14,7 +14,9 @@ interface MessageBubbleProps {
 export const MessageBubble = memo(
   forwardRef<HTMLDivElement, MessageBubbleProps>(({ message }, ref) => {
     const currentUser = useAuthStore((s) => s.user);
-    const isOwn = message.sender.id === currentUser?.id;
+    const currentId = currentUser?.id || (currentUser as any)?._id;
+    const senderId = message.sender?.id || (message.sender as any)?._id;
+    const isOwn = Boolean(currentId && senderId && String(senderId) === String(currentId));
 
     return (
       <motion.div

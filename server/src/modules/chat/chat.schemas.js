@@ -1,8 +1,14 @@
 import { z } from "zod";
 
-export const createConversationSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Enter a valid email"),
-});
+export const createConversationSchema = z
+  .object({
+    email: z.string().trim().optional(),
+    userId: z.string().optional(),
+    username: z.string().trim().optional(),
+  })
+  .refine((data) => data.email || data.userId || data.username, {
+    message: "Provide an email, username, or userId to start conversation",
+  });
 
 export const sendMessageSchema = z.object({
   content: z

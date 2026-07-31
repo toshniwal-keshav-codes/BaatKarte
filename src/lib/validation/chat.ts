@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 export const searchUserSchema = z.object({
-  email: z
+  query: z
     .string()
     .trim()
-    .toLowerCase()
-    .min(1, "Email is required")
-    .email("Enter a valid email"),
+    .min(1, "Search query is required"),
 });
 export type SearchUserValues = z.infer<typeof searchUserSchema>;
 

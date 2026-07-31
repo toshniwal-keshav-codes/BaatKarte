@@ -36,9 +36,14 @@ export const ConversationItem = memo(function ConversationItem({
 }: ConversationItemProps) {
   const currentUser = useAuthStore((s) => s.user);
 
-  // Find the other participant
+  // Safely find the other participant
+  const currentId = currentUser?.id || (currentUser as any)?._id;
   const otherUser =
-    conversation.participants.find((p) => p.id !== currentUser?.id) || conversation.participants[0];
+    conversation.participants.find((p) => {
+      const pid = p.id || (p as any)?._id;
+      return pid && currentId && String(pid) !== String(currentId);
+    }) || conversation.participants[0];
+
   if (!otherUser) return null;
 
   return (

@@ -4,36 +4,84 @@ import { Message } from "../../models/Message.js";
 import { HttpError } from "../../middleware/error.js";
 import { paginationSchema } from "./chat.schemas.js";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Safe Id Extraction & Serialization Helpers ─────────────────────────────
+
+function safeId(val) {
+  if (!val) return "";
+  if (typeof val === "string") return val;
+  if (val._id) return val._id.toString();
+  if (val.id) return val.id.toString();
+  if (typeof val.toString === "function") return val.toString();
+  return String(val);
+}
+
+function serializeUser(u) {
+  if (!u) return null;
+  return {
+    id: safeId(u),
+    name: u.name || "",
+    username: u.username || "",
+    email: u.email || "",
+    avatarUrl: u.avatarUrl || "",
+    isOnline: Boolean(u.isOnline),
+    lastSeenAt: u.lastSeenAt || null,
+  };
+}
+
+function serializeMessage(m) {
+  if (!m) return null;
+  return {
+    id: safeId(m),
+    conversationId: safeId(m.conversationId),
+    sender: typeof m.sender === "object" && m.sender ? serializeUser(m.sender) : { id: safeId(m.sender) },
+    content: m.content || "",
+    status: m.status || "sent",
+    sentAt: m.sentAt || new Date(),
+    expiresAt: m.expiresAt || null,
+  };
+}
+
+function serializeConversation(c) {
+  if (!c) return null;
+  return {
+    id: safeId(c),
+    participants: Array.isArray(c.participants) ? c.participants.map(serializeUser).filter(Boolean) : [],
+    lastMessage: c.lastMessage ? serializeMessage(c.lastMessage) : null,
+    lastMessageAt: c.lastMessageAt || null,
+    createdAt: c.createdAt || null,
+    updatedAt: c.updatedAt || null,
+  };
+}
 
 function populateConversation(query) {
   return query
-    .populate("participants", "name username avatarUrl isOnline lastSeenAt")
+    .populate("participants", "name username email avatarUrl isOnline lastSeenAt")
     .populate({
       path: "lastMessage",
-      select: "content sender sentAt status",
+      select: "conversationId content sender sentAt status",
     });
 }
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
 
 /**
- * GET /api/chat/users/search?email=
- * Find a user by email (exclude self).
+ * GET /api/chat/users/search?q=
+ * Find users by email, username, or partial string (excludes self).
  */
 export async function searchUser(req, res, next) {
   try {
-    const email = (req.query.email || "").toLowerCase().trim();
-    if (!email) return next(new HttpError(400, "Email is required", "missing_email"));
+    const q = String(req.query.q || req.query.query || req.query.email || "").toLowerCase().trim();
+    if (!q) return res.json({ users: [] });
 
-    const user = await User.findOne({ email }).select(
-      "name username avatarUrl isOnline lastSeenAt email",
-    );
-    if (!user) return next(new HttpError(404, "User not found", "user_not_found"));
-    if (user._id.toString() === req.user._id.toString())
-      return next(new HttpError(400, "You cannot chat with yourself", "self_chat"));
+    const searchRegex = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const users = await User.find({
+      _id: { $ne: req.user._id },
+      $or: [{ email: searchRegex }, { username: searchRegex }, { name: searchRegex }],
+    })
+      .select("name username email avatarUrl isOnline lastSeenAt")
+      .limit(20);
 
-    res.json({ user: user.toPublic() });
+    res.json({ users: users.map(serializeUser).filter(Boolean) });
   } catch (err) {
     next(err);
   }
@@ -41,14 +89,23 @@ export async function searchUser(req, res, next) {
 
 /**
  * POST /api/chat/conversations
- * Body: { email }
+ * Body: { email, userId }
  * Opens existing conversation or creates a new one.
  */
 export async function createOrOpenConversation(req, res, next) {
   try {
-    const { email } = req.body;
+    const { email, userId } = req.body;
+    let other = null;
 
-    const other = await User.findOne({ email: email.toLowerCase() });
+    if (userId) {
+      other = await User.findById(userId);
+    } else if (email) {
+      const trimmed = String(email).trim().toLowerCase();
+      other = await User.findOne({
+        $or: [{ email: trimmed }, { username: trimmed }],
+      });
+    }
+
     if (!other) return next(new HttpError(404, "User not found", "user_not_found"));
     if (other._id.toString() === req.user._id.toString())
       return next(new HttpError(400, "You cannot chat with yourself", "self_chat"));
@@ -71,7 +128,7 @@ export async function createOrOpenConversation(req, res, next) {
       Conversation.findById(conversation._id),
     );
 
-    res.status(conversation.isNew ? 201 : 200).json({ conversation: populated });
+    res.status(conversation.isNew ? 201 : 200).json({ conversation: serializeConversation(populated) });
   } catch (err) {
     next(err);
   }
@@ -83,12 +140,14 @@ export async function createOrOpenConversation(req, res, next) {
  */
 export async function getConversations(req, res, next) {
   try {
-    const conversations = await populateConversation(
+    const rawConversations = await populateConversation(
       Conversation.find({ participants: req.user._id }).sort({
         lastMessageAt: -1,
         createdAt: -1,
       }),
     );
+
+    const conversations = rawConversations.map(serializeConversation).filter(Boolean);
 
     res.json({ conversations });
   } catch (err) {
@@ -122,11 +181,12 @@ export async function getMessages(req, res, next) {
     const messages = await Message.find(filter)
       .sort({ sentAt: -1 })
       .limit(limit)
-      .populate("sender", "name username avatarUrl");
+      .populate("sender", "name username email avatarUrl");
 
-    // Return oldest first so the UI can append correctly
+    const serializedMessages = messages.reverse().map(serializeMessage).filter(Boolean);
+
     res.json({
-      messages: messages.reverse(),
+      messages: serializedMessages,
       hasMore: messages.length === limit,
     });
   } catch (err) {
@@ -164,20 +224,22 @@ export async function sendMessage(req, res, next) {
       lastMessageAt: message.sentAt,
     });
 
-    await message.populate("sender", "name username avatarUrl");
+    await message.populate("sender", "name username email avatarUrl");
+
+    const serializedMessage = serializeMessage(message);
 
     // Emit real-time event via Socket.io (io attached to req.app)
     const io = req.app.get("io");
     if (io) {
-      io.to(conversationId).emit("message:new", { message });
+      io.to(conversationId).emit("message:new", { message: serializedMessage });
       io.to(conversationId).emit("conversation:updated", {
         conversationId,
-        lastMessage: message,
+        lastMessage: serializedMessage,
         lastMessageAt: message.sentAt,
       });
     }
 
-    res.status(201).json({ message });
+    res.status(201).json({ message: serializedMessage });
   } catch (err) {
     next(err);
   }
@@ -199,7 +261,7 @@ export async function deleteConversation(req, res, next) {
 
     // Remove current user from participants
     conversation.participants = conversation.participants.filter(
-      (p) => p.toString() !== req.user._id.toString(),
+      (p) => safeId(p) !== safeId(req.user._id),
     );
 
     if (conversation.participants.length === 0) {
