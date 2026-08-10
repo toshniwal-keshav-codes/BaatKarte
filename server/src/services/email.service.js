@@ -1,5 +1,11 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
 import { env } from "../config/env.js";
+
+// Force Node.js DNS resolution to prefer IPv4
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 /**
  * Professional, production-ready Email Service using Nodemailer with SMTP (e.g. Gmail).
