@@ -69,7 +69,7 @@ export function setRefreshCookie(res, raw, ttlMs) {
   res.cookie(REFRESH_COOKIE, raw, {
     httpOnly: true,
     secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SECURE ? "none" : "lax",
+    sameSite: env.COOKIE_SAME_SITE,
     domain: env.COOKIE_DOMAIN || undefined,
     path: "/api/auth",
     maxAge: ttlMs,
@@ -80,7 +80,7 @@ export function clearRefreshCookie(res) {
   res.clearCookie(REFRESH_COOKIE, {
     httpOnly: true,
     secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SECURE ? "none" : "lax",
+    sameSite: env.COOKIE_SAME_SITE,
     domain: env.COOKIE_DOMAIN || undefined,
     path: "/api/auth",
   });

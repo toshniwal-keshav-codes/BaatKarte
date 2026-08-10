@@ -2,32 +2,106 @@ import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 
 /**
- * Professional, reusable Email Service using Nodemailer with SMTP (e.g. Gmail).
- * Handles transactional emails with dark-themed HTML templates,
- * retry logic for transient failures, and safe error logging.
+ * Professional, production-ready Email Service using Nodemailer with SMTP (e.g. Gmail).
+ * Features:
+ * - Connection, greeting, and socket timeouts to prevent hanging promises
+ * - Transporter verification (transporter.verify())
+ * - Automatic whitespace trimming for Gmail App Passwords
+ * - Retry logic for transient failures
+ * - Structured logging at every step
  */
 export class EmailService {
   constructor() {
     this.host = env.SMTP_HOST || "smtp.gmail.com";
-    this.port = env.SMTP_PORT || 587;
-    this.user = env.SMTP_EMAIL || "";
-    this.pass = env.SMTP_PASSWORD || "";
+    this.port = Number(env.SMTP_PORT) || 587;
+    this.user = (env.SMTP_EMAIL || "").trim();
+    // Strip whitespace (e.g. Gmail 16-char app passwords with spaces "abcd efgh ijkl mnop")
+    this.pass = (env.SMTP_PASSWORD || "").replace(/\s+/g, "");
     this.from =
       env.EMAIL_FROM || (this.user ? `BaatKarte <${this.user}>` : "noreply@example.com");
 
+    this.isVerified = false;
+
     if (this.user && this.pass) {
+      const isSecure = Number(process.env.SMTP_PORT) === 465;
+      console.log(
+        `[email-service] Initializing SMTP Transporter (host=${this.host}, port=${this.port}, secure=${isSecure}, user=${this.user})`,
+      );
+
       this.transporter = nodemailer.createTransport({
         host: this.host,
         port: this.port,
-        secure: this.port === 465, // true for 465, false for 587 (STARTTLS)
+        secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for 587 (STARTTLS)
+        requireTLS: Number(process.env.SMTP_PORT) !== 465, // Enforce STARTTLS for port 587
         auth: {
           user: this.user,
           pass: this.pass,
         },
+        // Socket & Connection Timeouts to prevent hanging Promises
+        connectionTimeout: 10000, // 10 seconds to establish TCP connection
+        greetingTimeout: 10000,   // 10 seconds for SMTP greeting
+        socketTimeout: 15000,     // 15 seconds socket inactivity timeout
+        dnsTimeout: 10000,        // 10 seconds DNS lookup timeout
       });
+
+      // Run verification asynchronously on initialization
+      this.verifyTransporter();
     } else {
+      console.warn(
+        "[email-service] WARNING: SMTP_EMAIL or SMTP_PASSWORD not configured. Emails will be skipped.",
+      );
       this.transporter = null;
     }
+  }
+
+  /**
+   * Verify SMTP transporter connection & credentials using transporter.verify().
+   */
+  async verifyTransporter() {
+    if (!this.transporter) return false;
+
+    console.log("[email-service] Verifying SMTP transporter connection...");
+    try {
+      // Wrap verify() in a 15s timeout to prevent hanging on verification
+      const verifyPromise = this.transporter.verify();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("SMTP verification timed out after 15s")), 15000),
+      );
+
+      await Promise.race([verifyPromise, timeoutPromise]);
+      this.isVerified = true;
+      console.log("[email-service] ✅ SMTP Transporter verified successfully! Ready to send emails.");
+      return true;
+    } catch (err) {
+      this.isVerified = false;
+      console.error(`[email-service] ❌ SMTP Transporter verification failed: ${err.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Helper to execute sendMail with a strict 15-second timeout wrapper.
+   */
+  async _sendMailWithTimeout(mailOptions, timeoutMs = 15000) {
+    if (!this.transporter) {
+      throw new Error("SMTP Transporter not configured");
+    }
+
+    return new Promise((resolve, reject) => {
+      let timer = setTimeout(() => {
+        timer = null;
+        reject(new Error(`SMTP sendMail timed out after ${timeoutMs / 1000}s`));
+      }, timeoutMs);
+
+      this.transporter.sendMail(mailOptions, (err, info) => {
+        if (!timer) return; // already timed out
+        clearTimeout(timer);
+        if (err) {
+          return reject(err);
+        }
+        resolve(info);
+      });
+    });
   }
 
   /**
@@ -36,9 +110,9 @@ export class EmailService {
   async _sendWithRetry({ to, subject, html }) {
     if (!this.transporter || !this.user || !this.pass) {
       console.warn(
-        `[email-service] SMTP credentials not configured (SMTP_EMAIL/SMTP_PASSWORD) — skipped sending email to ${to}`,
+        `[email-service] SMTP credentials missing (SMTP_EMAIL/SMTP_PASSWORD) — skipped sending email to ${to}`,
       );
-      return { skipped: true };
+      throw new Error("SMTP credentials missing on server. Check SMTP_EMAIL and SMTP_PASSWORD.");
     }
 
     let attempt = 0;
@@ -46,28 +120,42 @@ export class EmailService {
 
     while (attempt < 2) {
       attempt++;
+      console.log(
+        `[email-service] Dispatching email to: ${to} | Subject: "${subject}" (Attempt ${attempt}/2)`,
+      );
       try {
-        const info = await this.transporter.sendMail({
-          from: this.from,
-          to,
-          subject,
-          html,
-        });
+        const info = await this._sendMailWithTimeout(
+          {
+            from: this.from,
+            to,
+            subject,
+            html,
+          },
+          15000, // 15s timeout limit
+        );
 
+        console.log(
+          `[email-service] ✅ sendMail success to ${to}: MessageId=${info.messageId} | Response="${info.response}"`,
+        );
         return { messageId: info.messageId, response: info.response };
       } catch (err) {
         lastError = err;
         console.error(
-          `[email-service] Send attempt ${attempt} failed for ${to} — ${err.message}`,
+          `[email-service] ❌ Attempt ${attempt} failed for ${to}: ${err.message}`,
         );
         if (attempt < 2) {
-          // Wait 1 second before retrying once on transient failure
+          console.log("[email-service] Waiting 1s before retry...");
           await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
     }
 
-    throw new Error(`Email delivery failed after retry: ${lastError?.message || "Unknown error"}`);
+    console.error(
+      `[email-service] ❌ Email delivery failed permanently after 2 attempts for ${to}: ${lastError?.message}`,
+    );
+    throw new Error(
+      `Email delivery failed: ${lastError?.message || "SMTP connection error"}`,
+    );
   }
 
   /**

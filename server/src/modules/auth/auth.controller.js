@@ -48,7 +48,12 @@ export async function registerStart(req, res, next) {
       pendingProfile: { name, username },
     });
 
-    await sendOtpEmail({ to: email, name, code, purpose: "register" });
+    try {
+      await sendOtpEmail({ to: email, name, code, purpose: "register" });
+    } catch (emailErr) {
+      console.error("[registerStart] OTP Email dispatch failed:", emailErr.message);
+      throw new HttpError(500, `Failed to send OTP email: ${emailErr.message}`, "email_delivery_failed");
+    }
 
     res.json({ otpToken, email, resendCooldown: env.OTP_RESEND_COOLDOWN_SECONDS });
   } catch (err) {
@@ -63,7 +68,13 @@ export async function loginStart(req, res, next) {
     if (!user) throw new HttpError(404, "No account found for this email", "user_not_found");
 
     const { otpToken, code } = await createChallenge({ purpose: "login", email });
-    await sendOtpEmail({ to: email, name: user.name, code, purpose: "login" });
+
+    try {
+      await sendOtpEmail({ to: email, name: user.name, code, purpose: "login" });
+    } catch (emailErr) {
+      console.error("[loginStart] OTP Email dispatch failed:", emailErr.message);
+      throw new HttpError(500, `Failed to send OTP email: ${emailErr.message}`, "email_delivery_failed");
+    }
 
     res.json({ otpToken, email, resendCooldown: env.OTP_RESEND_COOLDOWN_SECONDS });
   } catch (err) {
@@ -96,12 +107,17 @@ export async function otpResend(req, res, next) {
     challenge.expiresAt = new Date(Date.now() + env.OTP_TTL_SECONDS * 1000);
     await challenge.save();
 
-    await sendOtpEmail({
-      to: challenge.email,
-      name: challenge.pendingProfile?.name,
-      code,
-      purpose: challenge.purpose,
-    });
+    try {
+      await sendOtpEmail({
+        to: challenge.email,
+        name: challenge.pendingProfile?.name,
+        code,
+        purpose: challenge.purpose,
+      });
+    } catch (emailErr) {
+      console.error("[otpResend] OTP Email dispatch failed:", emailErr.message);
+      throw new HttpError(500, `Failed to resend OTP email: ${emailErr.message}`, "email_delivery_failed");
+    }
 
     res.json({ ok: true, resendCooldown: env.OTP_RESEND_COOLDOWN_SECONDS });
   } catch (err) {

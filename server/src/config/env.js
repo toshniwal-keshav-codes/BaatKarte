@@ -17,6 +17,7 @@ const schema = z.object({
     .string()
     .default("false")
     .transform((v) => v === "true"),
+  COOKIE_SAME_SITE: z.enum(["lax", "none", "strict"]).default("lax"),
 
   OTP_TTL_SECONDS: z.coerce.number().default(600),
   OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().default(60),
