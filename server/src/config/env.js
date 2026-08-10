@@ -23,7 +23,7 @@ const schema = z.object({
   OTP_RESEND_COOLDOWN_SECONDS: z.coerce.number().default(60),
   OTP_MAX_ATTEMPTS: z.coerce.number().default(5),
 
-  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_HOST: z.string().min(1, "SMTP_HOST is required"),
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_EMAIL: z.string().optional().default(""),
   SMTP_PASSWORD: z.string().optional().default(""),

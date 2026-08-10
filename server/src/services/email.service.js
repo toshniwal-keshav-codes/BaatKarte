@@ -11,7 +11,7 @@ import { env } from "../config/env.js";
  */
 export class EmailService {
   constructor() {
-    this.host = env.SMTP_HOST || "smtp.example.com";
+    this.host = env.SMTP_HOST;
     this.port = Number(env.SMTP_PORT) || 587;
     this.user = (env.SMTP_EMAIL || "").trim();
     this.pass = (env.SMTP_PASSWORD || "").trim();
