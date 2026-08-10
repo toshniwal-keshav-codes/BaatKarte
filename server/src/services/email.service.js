@@ -37,6 +37,8 @@ export class EmailService {
           user: this.user,
           pass: this.pass,
         },
+        // Force IPv4 resolution for smtp.gmail.com
+        family: 4,
         // Socket & Connection Timeouts to prevent hanging Promises
         connectionTimeout: 10000, // 10 seconds to establish TCP connection
         greetingTimeout: 10000,   // 10 seconds for SMTP greeting

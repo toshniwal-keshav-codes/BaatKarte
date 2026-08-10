@@ -1,4 +1,11 @@
 import "dotenv/config";
+import dns from "node:dns";
+
+// Force Node.js DNS resolution to prefer IPv4
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
 import http from "node:http";
 import express from "express";
 import cors from "cors";
