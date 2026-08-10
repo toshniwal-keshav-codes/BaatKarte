@@ -1,28 +1,20 @@
 import nodemailer from "nodemailer";
-import dns from "node:dns";
 import { env } from "../config/env.js";
 
-// Force Node.js DNS resolution to prefer IPv4
-if (typeof dns.setDefaultResultOrder === "function") {
-  dns.setDefaultResultOrder("ipv4first");
-}
-
 /**
- * Professional, production-ready Email Service using Nodemailer with SMTP (e.g. Gmail).
+ * Professional, production-ready Email Service using Nodemailer with SMTP.
  * Features:
  * - Connection, greeting, and socket timeouts to prevent hanging promises
  * - Transporter verification (transporter.verify())
- * - Automatic whitespace trimming for Gmail App Passwords
  * - Retry logic for transient failures
  * - Structured logging at every step
  */
 export class EmailService {
   constructor() {
-    this.host = env.SMTP_HOST || "smtp.gmail.com";
+    this.host = env.SMTP_HOST || "smtp.example.com";
     this.port = Number(env.SMTP_PORT) || 587;
     this.user = (env.SMTP_EMAIL || "").trim();
-    // Strip whitespace (e.g. Gmail 16-char app passwords with spaces "abcd efgh ijkl mnop")
-    this.pass = (env.SMTP_PASSWORD || "").replace(/\s+/g, "");
+    this.pass = (env.SMTP_PASSWORD || "").trim();
     this.from =
       env.EMAIL_FROM || (this.user ? `BaatKarte <${this.user}>` : "noreply@example.com");
 
@@ -43,8 +35,6 @@ export class EmailService {
           user: this.user,
           pass: this.pass,
         },
-        // Force IPv4 resolution for smtp.gmail.com
-        family: 4,
         // Socket & Connection Timeouts to prevent hanging Promises
         connectionTimeout: 10000, // 10 seconds to establish TCP connection
         greetingTimeout: 10000,   // 10 seconds for SMTP greeting
